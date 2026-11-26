@@ -4,7 +4,7 @@ import type RAPIER_NS from '@dimforge/rapier3d-compat'
 import { PALETTE, createStage, type SketchMeta } from '@ux-sketches/stage'
 import '@ux-sketches/stage/stage.css'
 import meta from './sketch.json' with { type: 'json' }
-import { emptyQueue, pushToast, removeToast, toastQueue, type QueueStep } from './queue.ts'
+import { emptyQueue, pushToast, removeToast, toastQueue, trimFloor, type QueueStep } from './queue.ts'
 
 const stage = await createStage(document.getElementById('stage')!, { meta: meta as SketchMeta, physics: true, sound: true })
 
@@ -80,6 +80,15 @@ if (stage && stage.world && stage.rapier) {
     return t
   }
 
+  // A toast joins the floor; anything over the limit (oldest first) is removed.
+  function toFloor(t: Toast) {
+    floorOrder.push(t.id)
+    for (const id of trimFloor(floorOrder, FLOOR_LIMIT).remove) {
+      const old = toasts.get(id)
+      if (old) destroy(old)
+    }
+  }
+
   function destroy(t: Toast) {
     stage!.unbind(t.mesh)
     world.removeRigidBody(t.body)
@@ -107,6 +116,7 @@ if (stage && stage.world && stage.rapier) {
     const t = toasts.get(id)
     if (!t) return
     t.state = 'evicted'
+    t.landedAt = clock
     if (stage!.reducedMotion) return destroy(t)
     t.body.setLinvel({ x: 2.6, y: 0.6, z: 0 }, true)
     t.body.setAngvel({ x: 0, y: 0, z: -4 }, true)
@@ -116,11 +126,7 @@ if (stage && stage.world && stage.rapier) {
   function dismiss(t: Toast) {
     queue = removeToast(queue, t.id)
     t.state = 'dismissed'
-    floorOrder.push(t.id)
-    if (floorOrder.length > FLOOR_LIMIT) {
-      const old = toasts.get(floorOrder[0])
-      if (old) destroy(old)
-    }
+    toFloor(t)
     if (stage!.reducedMotion) {
       const b = stage!.block
       const x = (((t.id * 0.37) % 1) - 0.5) * b.halfWidth * 1.6
@@ -187,7 +193,8 @@ if (stage && stage.world && stage.rapier) {
     arrive(toastQueue(queue, clock, { interval: INTERVAL, cap: CAP, auto: !stage.reducedMotion }))
     for (const t of [...toasts.values()]) {
       const p = t.body.translation()
-      const vy = (p.y - t.lastY) / Math.max(dt, 1e-4)
+      // Fall speed from the body, not from position change: at 120 Hz some frames have no physics step.
+      const vy = t.body.linvel().y
       // Landing: a sharp stop after falling. Thunk by impact; splat the ink if it's the floor.
       if (t.vy < -1.2 && vy > -0.3) {
         const impact = -t.vy
@@ -206,13 +213,13 @@ if (stage && stage.world && stage.rapier) {
       if (t.state === 'shelf' && p.y < SHELF.top - 0.15) {
         t.state = 'dismissed'
         queue = removeToast(queue, t.id)
-        floorOrder.push(t.id)
+        toFloor(t)
         announce()
       }
-      if (t.state === 'evicted' && (p.y < -1 || Math.abs(p.x) > 3.5)) destroy(t)
-      else if (t.state === 'evicted' && p.y < 0.06) {
+      // Evicted toasts go after 4 s wherever they end up (floor, wedged on the shelf), or at once off-stage.
+      if (t.state === 'evicted') {
         t.landedAt ??= clock
-        if (clock - t.landedAt > 3) destroy(t)
+        if (p.y < -1 || Math.abs(p.x) > 3.5 || clock - t.landedAt > 4) destroy(t)
       }
     }
   })

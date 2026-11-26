@@ -10,6 +10,17 @@ import { buildFeed, SITE_TITLE, type Feed } from './feed.ts'
 export const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const DEFAULT_SITE_URL = 'http://localhost:4173'
 
+/**
+ * The public URL the feed should point at. On Vercel, a build without SKETCH_SITE_URL uses the project's
+ * production domain; if even that is missing it stops, rather than publishing a feed of localhost links.
+ */
+export function resolveSiteUrl(env: Record<string, string | undefined>): string {
+  if (env.SKETCH_SITE_URL) return env.SKETCH_SITE_URL
+  if (env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
+  if (env.VERCEL) throw new Error('Set SKETCH_SITE_URL to the public URL of this site (the feed would otherwise point at localhost).')
+  return DEFAULT_SITE_URL
+}
+
 /** Sketch folders: `sketches/NNN-…` directories, in name order. */
 export function listSketchDirs(root: string): string[] {
   const dir = join(root, 'sketches')
@@ -85,7 +96,7 @@ function indexHtml(feed: Feed): string {
 
 export async function buildSite(opts: { root?: string; siteUrl?: string; allowMissingThumbnails?: boolean } = {}): Promise<Feed> {
   const root = opts.root ?? ROOT
-  const siteUrl = opts.siteUrl ?? process.env.SKETCH_SITE_URL ?? DEFAULT_SITE_URL
+  const siteUrl = opts.siteUrl ?? resolveSiteUrl(process.env)
   const allowMissing = opts.allowMissingThumbnails ?? process.env.ALLOW_MISSING_THUMBNAILS === '1'
   const sketches = loadSketches(root)
   if (!allowMissing) {

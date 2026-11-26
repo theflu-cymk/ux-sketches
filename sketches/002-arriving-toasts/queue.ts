@@ -23,3 +23,9 @@ export function toastQueue(s: ToastQueue, now: number, o: { interval: number; ca
 export function removeToast(s: ToastQueue, id: number): ToastQueue {
   return { ...s, live: s.live.filter((x) => x !== id) }
 }
+
+/** Dismissed toasts lying on the floor: keep the newest `limit`, remove the rest (oldest first). */
+export function trimFloor(order: number[], limit: number): { keep: number[]; remove: number[] } {
+  const cut = Math.max(0, order.length - limit)
+  return { keep: order.slice(cut), remove: order.slice(0, cut) }
+}
