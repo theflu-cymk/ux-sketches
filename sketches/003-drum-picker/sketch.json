@@ -1,0 +1,20 @@
+{
+  "number": 3,
+  "slug": "003-drum-picker",
+  "title": "DRUM PICKER",
+  "date": "2026-11-26",
+  "component": "Date picker",
+  "question": "What if picking a date was a gamble?",
+  "note": "Three drums, flicked like a slot machine. Spin one gently and it ticks through its detents and settles; spin it hard and the whole picker rattles off its feet and hops toward its own label; shove it the rest of the way and the letters scatter. It will happily land on 31 FEB and mark it with a question mark rather than stop you, which is the opposite of what a date picker is for, and oddly honest about how often we pick a date by feel.",
+  "tools": [
+    "Three.js",
+    "Rapier",
+    "troika-three-text",
+    "Web Audio"
+  ],
+  "floorText": "letters",
+  "categories": [
+    "3D",
+    "INTERACTION"
+  ]
+}

@@ -1,10 +1,15 @@
 import { Plane, Raycaster, Vector2, Vector3, type Intersection, type Object3D } from 'three'
 import type { Stage } from './stage.ts'
 
+export type DragPlane = 'floor' | 'vertical'
+
 export type DragOptions = {
   targets: Object3D[]
-  /** 'floor': a horizontal plane through the grab point. 'vertical': an upright plane through it, facing the camera. */
-  plane: 'floor' | 'vertical'
+  /**
+   * 'floor': a horizontal plane through the grab point. 'vertical': an upright plane through it, facing the
+   * camera. A function picks per grab, from what was hit.
+   */
+  plane: DragPlane | ((hit: Intersection) => DragPlane)
   onStart?(hit: Intersection): void
   onMove?(point: Vector3, delta: Vector3): void
   onEnd?(): void
@@ -42,7 +47,8 @@ export function createDrag(stage: Stage, o: DragOptions): () => void {
     aim(e)
     const hit = ray.intersectObjects(o.targets, true)[0]
     if (!hit) return
-    if (o.plane === 'floor') plane.setFromNormalAndCoplanarPoint(new Vector3(0, 1, 0), hit.point)
+    const kind = typeof o.plane === 'function' ? o.plane(hit) : o.plane
+    if (kind === 'floor') plane.setFromNormalAndCoplanarPoint(new Vector3(0, 1, 0), hit.point)
     else {
       const n = camera.position.clone().sub(hit.point).setY(0).normalize()
       plane.setFromNormalAndCoplanarPoint(n, hit.point)

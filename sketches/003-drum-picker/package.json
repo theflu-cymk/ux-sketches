@@ -1,0 +1,11 @@
+{
+  "name": "003-drum-picker",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@ux-sketches/stage": "workspace:*",
+    "@dimforge/rapier3d-compat": "^0.21.0",
+    "three": "^0.187.0",
+    "troika-three-text": "^0.53.1"
+  }
+}
