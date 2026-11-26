@@ -1,0 +1,12 @@
+{
+  "number": 4,
+  "slug": "004-tracking-accordion",
+  "title": "TRACKING ACCORDION",
+  "date": "2026-11-26",
+  "component": "Letter-spacing control",
+  "question": "What if letter-spacing had elasticity?",
+  "note": "Tracking is usually a number in a field. Here the word stands on a rail as type blocks joined by springs: pull a letter and the whole word stretches like a bellows, squeeze it and the blocks jam together, let go and it wobbles back to its natural fit. The readout keeps the honest number in thousandths of an em, but the hand learns the feel faster than the eye learns the value.",
+  "tools": ["Three.js", "troika-three-text", "Web Audio"],
+  "floorText": "print",
+  "categories": ["3D", "INTERACTION", "MOTION"]
+}

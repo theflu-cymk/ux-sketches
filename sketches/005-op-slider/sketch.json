@@ -1,0 +1,12 @@
+{
+  "number": 5,
+  "slug": "005-op-slider",
+  "title": "OP SLIDER",
+  "date": "2026-11-26",
+  "component": "Slider",
+  "question": "What if a slider bent the space around it?",
+  "note": "A slider on a field of Op Art stripes. The thumb bulges the stripes around it like a Vasarely sphere, so the perfectly straight track looks curved wherever the thumb is, and flinging it makes the whole field shimmer. The readout stays truthful while your eyes argue with it: a small lesson in how much a control's surroundings decide what we think it's doing.",
+  "tools": ["Three.js", "GLSL", "troika-three-text", "Web Audio"],
+  "floorText": "print",
+  "categories": ["3D", "INTERACTION", "GENERATIVE"]
+}

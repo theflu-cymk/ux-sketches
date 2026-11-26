@@ -1,0 +1,12 @@
+{
+  "number": 6,
+  "slug": "006-floating-grid",
+  "title": "FLOATING GRID",
+  "date": "2026-11-26",
+  "component": "Card grid layout",
+  "question": "What if a layout reflowed like water?",
+  "note": "Nine cards float in a shallow tank. Lift one out and the others drift to fill the hole; carry it over the grid and they part to make room; drop it and the neighbours bob in its wake. Nothing snaps, so the reflow you normally miss in a single frame becomes something you watch, and you start reading cause and effect in a layout instead of just its final state.",
+  "tools": ["Three.js", "Web Audio"],
+  "floorText": "print",
+  "categories": ["3D", "INTERACTION", "MOTION"]
+}
