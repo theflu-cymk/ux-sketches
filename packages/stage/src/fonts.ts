@@ -4,11 +4,7 @@ import bold from '@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-700-normal
 /** IBM Plex Mono (SIL Open Font License), bundled so no font is fetched from a third party. */
 export const FONTS = { medium, bold }
 
-/** Monospace advance as a fraction of the font size (IBM Plex Mono: 600 / 1000 em). */
-export const MONO_ADVANCE = 0.6
-
-/** Cap height as a fraction of the font size (IBM Plex Mono: 698 / 1000 em). */
-export const CAP_HEIGHT = 0.698
+export { CAP_HEIGHT, MONO_ADVANCE } from './font-metrics.ts'
 
 let loaded: Promise<void> | null = null
 

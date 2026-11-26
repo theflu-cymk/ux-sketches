@@ -1,0 +1,12 @@
+{
+  "number": 1,
+  "slug": "001-weighted-toggle",
+  "title": "WEIGHTED TOGGLE",
+  "date": "2026-11-26",
+  "component": "Toggle switch",
+  "question": "What if switching cost effort?",
+  "note": "A switch you have to haul over its own weight. Halfway is the best part: the lever strains against you, the housing shakes, and letting go too early drops it straight back. Making the change of state physical makes it feel deliberate, and that turns out to be the point of a toggle we usually flick past.",
+  "tools": ["Three.js", "Web Audio"],
+  "floorText": "print",
+  "categories": ["3D", "INTERACTION"]
+}

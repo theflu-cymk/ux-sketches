@@ -9,18 +9,21 @@ import { printLines, type PrintLine } from './print.ts'
 
 export type { InkSurface } from './ink.ts'
 export type { LetterBody } from './letters.ts'
-export { letterHomes, smearStamps } from './geometry.ts'
+export { fitCap, letterHomes, smearStamps } from './geometry.ts'
+import { fitCap } from './geometry.ts'
 
 export type FloorText = { mode: FloorTextMode; ink?: InkSurface; letters?: LetterBody[] }
 
 function linesFor(meta: SketchMeta, block: FloorBlock, withHeading: boolean): PrintLine[] {
   const l = floorLines(meta)
   const number = String(meta.number).padStart(3, '0')
+  const width = block.halfWidth * 2
+  const date = withHeading ? l.date : `${number} · ${l.date}`
   return [
-    ...(withHeading ? [{ text: l.heading, z: block.headingZ, cap: block.headingCap, bold: true }] : []),
-    { text: withHeading ? l.date : `${number} · ${l.date}`, z: block.dateZ, cap: block.smallCap },
+    ...(withHeading ? [{ text: l.heading, z: block.headingZ, cap: fitCap(l.heading, block.headingCap, width), bold: true }] : []),
+    { text: date, z: block.dateZ, cap: fitCap(date, block.smallCap, width) },
     { text: l.question, z: block.questionZ, cap: block.questionCap, wrap: true },
-    { text: l.tools, z: block.toolsZ, cap: block.smallCap },
+    { text: l.tools, z: block.toolsZ, cap: fitCap(l.tools, block.smallCap, width) },
   ]
 }
 

@@ -5,7 +5,7 @@ import type { FloorBlock } from '../camera.ts'
 import { CAP_HEIGHT, FONTS, MONO_ADVANCE } from '../fonts.ts'
 import { PALETTE } from '../palette.ts'
 import type { Physics } from '../physics.ts'
-import { letterHomes } from './geometry.ts'
+import { fitCap, letterHomes } from './geometry.ts'
 
 export type LetterBody = { char: string; mesh: Mesh; body: RAPIER_NS.RigidBody; home: Vector3 }
 
@@ -16,7 +16,7 @@ const TILE_HEIGHT = 0.03
  * printed text; anything that hits it can knock the letters over and scatter them.
  */
 export function createLetters(scene: Scene, physics: Physics, text: string, z: number, block: FloorBlock) {
-  const cap = block.headingCap
+  const cap = fitCap(text, block.headingCap, block.halfWidth * 2)
   const fontSize = cap / CAP_HEIGHT
   const advance = fontSize * MONO_ADVANCE
   const chars = [...text]

@@ -7,7 +7,7 @@ import {
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
-  PCFSoftShadowMap,
+  PCFShadowMap,
   PerspectiveCamera,
   PlaneGeometry,
   Scene,
@@ -154,7 +154,7 @@ export async function createStage(container: HTMLElement, options: StageOptions)
   renderer.outputColorSpace = SRGBColorSpace
   renderer.toneMapping = ACESFilmicToneMapping
   renderer.shadowMap.enabled = true
-  renderer.shadowMap.type = PCFSoftShadowMap
+  renderer.shadowMap.type = PCFShadowMap
   const canvas = renderer.domElement
   canvas.setAttribute('role', 'img')
   canvas.setAttribute('aria-label', `${meta.title}: ${meta.question}`)

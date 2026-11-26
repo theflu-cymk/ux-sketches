@@ -144,6 +144,18 @@ importers:
         specifier: ^0.187.0
         version: 0.187.0
 
+  sketches/001-weighted-toggle:
+    dependencies:
+      '@ux-sketches/stage':
+        specifier: workspace:*
+        version: link:../../packages/stage
+      three:
+        specifier: ^0.187.0
+        version: 0.187.0
+      troika-three-text:
+        specifier: ^0.53.1
+        version: 0.53.1
+
 packages:
 
   '@dimforge/rapier3d-compat@0.12.0':

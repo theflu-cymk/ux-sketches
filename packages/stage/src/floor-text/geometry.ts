@@ -1,3 +1,5 @@
+import { CAP_HEIGHT, MONO_ADVANCE } from '../font-metrics.ts'
+
 /** Stamp points along a smear, at most radius/2 apart, including both ends. World x/z on the floor. */
 export function smearStamps(fromX: number, fromZ: number, toX: number, toZ: number, radius: number): Array<[number, number]> {
   const dist = Math.hypot(toX - fromX, toZ - fromZ)
@@ -22,4 +24,10 @@ export function letterHomes(text: string, widths: number[], spacing: number, ori
     x += widths[i] + spacing
   })
   return homes
+}
+
+/** The largest cap height, up to `cap`, at which a monospaced line fits within `width` metres. */
+export function fitCap(text: string, cap: number, width: number): number {
+  const lineWidth = [...text].length * (cap / CAP_HEIGHT) * MONO_ADVANCE
+  return lineWidth <= width ? cap : cap * (width / lineWidth)
 }
