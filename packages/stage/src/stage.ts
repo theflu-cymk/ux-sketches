@@ -1,7 +1,6 @@
 import {
   ACESFilmicToneMapping,
   CanvasTexture,
-  Color,
   DirectionalLight,
   Fog,
   HemisphereLight,
@@ -18,9 +17,15 @@ import {
 } from 'three'
 import { cameraFor, floorBlock, type FloorBlock } from './camera.ts'
 import { mountControls } from './controls.ts'
+import { createFloorText, type FloorText } from './floor-text/index.ts'
 import type { SketchMeta } from './meta.ts'
 import { prefersReducedMotion } from './motion.ts'
+import { PALETTE } from './palette.ts'
+import { createPhysics, type Physics, type Rapier } from './physics.ts'
+import { createSound, type Sound } from './sound.ts'
 import { hasWebGL } from './webgl.ts'
+
+export { PALETTE } from './palette.ts'
 
 export type StageOptions = { meta: SketchMeta; physics?: boolean; sound?: boolean }
 
@@ -44,13 +49,15 @@ export type Stage = {
   reset(): void
   /** The sketch has settled: thumbnail capture and browser checks wait for this. */
   ready(): void
-}
-
-export const PALETTE = {
-  surround: new Color('#17171a'),
-  floor: new Color('#d8d3ca'),
-  ink: new Color('#1d1c1a'),
-  accent: new Color('#ff5a1f'),
+  /** The floor text, with the ink surface or the letter bodies when the sketch's mode has them. */
+  floor: FloorText
+  /** Present when the sketch asked for physics, or uses letters mode. */
+  world: Physics['world'] | null
+  rapier: Rapier | null
+  /** Copies a body's transform to an object after every physics step. No-op without physics. */
+  bind: Physics['bind']
+  unbind: Physics['unbind']
+  sound: Sound
 }
 
 function paragraph(text: string) {
@@ -193,6 +200,12 @@ export async function createStage(container: HTMLElement, options: StageOptions)
     reducedMotion: prefersReducedMotion(),
     thumbnail,
     block: floorBlock(16 / 9),
+    floor: { mode: meta.floorText },
+    world: null,
+    rapier: null,
+    bind: () => {},
+    unbind: () => {},
+    sound: createSound(),
     onFrame(cb) {
       frameCbs.add(cb)
       return () => frameCbs.delete(cb)
@@ -238,12 +251,27 @@ export async function createStage(container: HTMLElement, options: StageOptions)
   new ResizeObserver(resize).observe(container)
   resize()
 
+  // Physics steps before any sketch frame callback, so sketches read this frame's poses.
+  const physics = options.physics || meta.floorText === 'letters' ? await createPhysics() : null
+  if (physics) {
+    stage.world = physics.world
+    stage.rapier = physics.rapier
+    stage.bind = physics.bind
+    stage.unbind = physics.unbind
+    stage.onFrame((dt) => physics.step(dt))
+  }
+
+  const floorText = await createFloorText(scene, meta, physics, stage.block)
+  stage.floor = floorText.floor
+  stage.onReset(() => floorText.reset())
+  stage.onResize((b) => void floorText.rebuild(b))
+
   if (!thumbnail) {
     mountControls(container, {
       meta,
       soundAvailable: !!options.sound,
       onReset: () => stage.reset(),
-      onSound: (on) => soundHook.set?.(on),
+      onSound: (on) => stage.sound.setEnabled(on),
     })
   }
 
@@ -267,6 +295,3 @@ export async function createStage(container: HTMLElement, options: StageOptions)
 
   return stage
 }
-
-/** Task 3 wires sound in here; the Sound button calls it. */
-export const soundHook: { set?: (on: boolean) => void | Promise<void> } = {}

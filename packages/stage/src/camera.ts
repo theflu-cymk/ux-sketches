@@ -44,7 +44,7 @@ function framingPoints(block: FloorBlock): Vector3[] {
 export function cameraFor(aspect: number): CameraSetup {
   const block = floorBlock(aspect)
   const portrait = aspect < 1
-  const elevation = ((portrait ? 52 : 34) * Math.PI) / 180
+  const elevation = ((portrait ? 52 : 42) * Math.PI) / 180
   const target = new Vector3(0, portrait ? 0.25 : 0.35, (block.zFar + -0.5) / 2)
   const dir = new Vector3(0, Math.sin(elevation), Math.cos(elevation))
   const pts = framingPoints(block)
