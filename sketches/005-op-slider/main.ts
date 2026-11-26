@@ -3,7 +3,7 @@ import { Text } from 'troika-three-text'
 import { CAP_HEIGHT, FONTS, PALETTE, createDrag, createStage, type SketchMeta } from '@ux-sketches/stage'
 import '@ux-sketches/stage/stage.css'
 import meta from './sketch.json' with { type: 'json' }
-import { shimmerFrom, sliderValue } from './op.ts'
+import { shimmerFrom, sliderValue, underlayAngle } from './op.ts'
 
 const stage = await createStage(document.getElementById('stage')!, { meta: meta as SketchMeta, sound: true })
 
@@ -12,17 +12,20 @@ if (stage) {
   const HALF = 0.95
   const TRACK_Z = -0.15
   const MAT = { w: 2.7, d: 1.3, z: -0.2 }
-  const RADIUS = 0.42
-  const STRENGTH = 0.82
+  const RADIUS = 0.6
+  /** How far, in metres, the puck pushes the nearest lines away. */
+  const PUSH = 0.28
 
-  // The Op Art mat: Riley-ish wavy stripes, bulged around the thumb like a Vasarely sphere.
+  // The Op Art mat: Riley-ish wavy stripes, bulged hard around the thumb like a Vasarely sphere, over a
+  // second layer of stripes at right angles that turns around the thumb as it slides.
   const opMat = new ShaderMaterial({
     uniforms: {
       uThumb: { value: new Vector2(0, TRACK_Z) },
       uRadius: { value: RADIUS },
-      uStrength: { value: STRENGTH },
+      uPush: { value: PUSH },
       uTime: { value: 0 },
       uShimmer: { value: 0 },
+      uAngle: { value: Math.PI / 2 },
       uInk: { value: PALETTE.ink.clone() },
       uPaper: { value: PALETTE.tile.clone() },
     },
@@ -36,21 +39,30 @@ if (stage) {
     `,
     fragmentShader: /* glsl */ `
       uniform vec2 uThumb;
-      uniform float uRadius, uStrength, uTime, uShimmer;
+      uniform float uRadius, uPush, uTime, uShimmer, uAngle;
       uniform vec3 uInk, uPaper;
       varying vec2 vWorld;
       void main() {
-        // Same as bulgeSample() in op.ts.
+        // Same as bulgeSample() in op.ts: lines pushed straight away from the thumb, opening a clearing.
         vec2 d = vWorld - uThumb;
-        float k = 1.0 - min(0.95, uStrength) * exp(-dot(d, d) / (uRadius * uRadius));
-        vec2 q = uThumb + d * k;
+        float r = length(d);
+        float rs = max(0.0, r - uPush * exp(-r * r / (uRadius * uRadius)));
+        vec2 q = uThumb + (r > 0.0 ? d / r * rs : vec2(0.0));
         float wave = sin(q.x * 3.2 + uTime * 6.0 * uShimmer) * (0.18 + 0.5 * uShimmer);
-        float v = q.y * 16.0 + wave;
+        // Phase so a light gap is centred on the thumb: magnified, it opens into a clearing the lines bow around.
+        float v = (q.y - uThumb.y) * 16.0 + 0.5 + wave * smoothstep(0.0, uRadius, length(d));
         // Triangle wave across each stripe, thresholded with a pixel-wide edge so the stripes stay crisp.
         float tri = abs(fract(v) - 0.5) * 2.0;
         float w = fwidth(v) * 2.0;
-        float stripe = smoothstep(0.5 - w, 0.5 + w, tri);
-        gl_FragColor = vec4(mix(uPaper, uInk, stripe), 1.0);
+        float top = smoothstep(0.5 - w, 0.5 + w, tri);
+        // The under-layer: flat (not bulged) stripes, perpendicular at the centre, turned around the thumb by
+        // uAngle (see underlayAngle in op.ts), at a slightly different pitch so the two layers beat into moire.
+        float u = dot(d, vec2(-sin(uAngle), cos(uAngle))) * 13.0;
+        float tri2 = abs(fract(u) - 0.5) * 2.0;
+        float w2 = fwidth(u) * 2.0;
+        float under = smoothstep(0.68 - w2, 0.68 + w2, tri2);
+        float ink = max(top, under);
+        gl_FragColor = vec4(mix(uPaper, uInk, ink), 1.0);
         #include <colorspace_fragment>
       }
     `,
@@ -121,7 +133,8 @@ if (stage) {
     thumb.position.x = x
     opMat.uniforms.uThumb.value.set(x, TRACK_Z)
     opMat.uniforms.uShimmer.value = shimmerFrom(speed, stage.reducedMotion)
-    opMat.uniforms.uStrength.value = STRENGTH + (stage.reducedMotion ? 0 : Math.min(0.1, speed * 0.04))
+    opMat.uniforms.uAngle.value = underlayAngle(x, HALF)
+    opMat.uniforms.uPush.value = PUSH + (stage.reducedMotion ? 0 : Math.min(0.06, speed * 0.03))
     if (!stage.reducedMotion) opMat.uniforms.uTime.value = t
     const value = sliderValue(x, HALF)
     if (value !== shown) {
