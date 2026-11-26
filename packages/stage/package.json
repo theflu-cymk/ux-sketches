@@ -1,0 +1,17 @@
+{
+  "name": "@ux-sketches/stage",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./stage.css": "./src/stage.css"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.21.0",
+    "three": "^0.187.0",
+    "troika-three-text": "^0.53.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.187.0"
+  }
+}
