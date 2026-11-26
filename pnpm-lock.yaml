@@ -154,7 +154,7 @@ importers:
         version: 0.187.0
       troika-three-text:
         specifier: ^0.53.1
-        version: 0.53.1
+        version: 0.53.1(three@0.187.0)
 
 packages:
 
