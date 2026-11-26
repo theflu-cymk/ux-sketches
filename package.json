@@ -8,10 +8,13 @@
     "typecheck": "tsc --noEmit",
     "build": "node scripts/build-site.ts",
     "thumbnails": "node scripts/capture-thumbnails.ts",
-    "check": "node scripts/check-sketches.ts"
+    "check": "node scripts/check-sketches.ts",
+    "demo": "vite packages/stage/demo"
   },
   "devDependencies": {
     "@types/node": "^26.6.10",
+    "@types/three": "^0.187.0",
+    "three": "^0.187.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.8"
   }

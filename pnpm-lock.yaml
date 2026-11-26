@@ -112,6 +112,12 @@ importers:
       '@types/node':
         specifier: ^26.6.10
         version: 26.6.10
+      '@types/three':
+        specifier: ^0.187.0
+        version: 0.187.0
+      three:
+        specifier: ^0.187.0
+        version: 0.187.0
       typescript:
         specifier: ^7.0.2
         version: 7.0.2

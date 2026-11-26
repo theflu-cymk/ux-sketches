@@ -1,0 +1,29 @@
+html, body { margin: 0; height: 100%; background: #17171a; color: #ece9e4; overflow: hidden; }
+body { font: 13px/1.4 ui-monospace, 'IBM Plex Mono', SFMono-Regular, Consolas, monospace; }
+.uxs-stage { position: fixed; inset: 0; overflow: hidden; touch-action: none; }
+.uxs-stage canvas { display: block; width: 100%; height: 100%; outline: none; }
+.uxs-controls { position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; z-index: 2; }
+.uxs-button {
+  min-width: 44px; min-height: 44px; padding: 0 12px; border: 1px solid #ffffff33; border-radius: 6px;
+  background: #17171acc; color: #ece9e4; font: inherit; cursor: pointer;
+}
+.uxs-button:hover { background: #2a2a2f; }
+.uxs-button:focus-visible { outline: 2px solid #ffb02e; outline-offset: 2px; }
+.uxs-sound[aria-pressed='true'] { background: #ece9e4; color: #17171a; }
+.uxs-panel {
+  position: absolute; top: 64px; right: 12px; z-index: 2; width: min(340px, calc(100vw - 24px));
+  max-height: calc(100% - 80px); overflow: auto; box-sizing: border-box; padding: 14px 16px;
+  border: 1px solid #ffffff33; border-radius: 8px; background: #17171af2;
+}
+.uxs-panel-title { margin: 0 0 10px; font-weight: 700; letter-spacing: .04em; }
+.uxs-panel dl { margin: 0; }
+.uxs-panel dt { color: #a7a39c; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; margin-top: 10px; }
+.uxs-panel dd { margin: 2px 0 0; }
+.uxs-extra { position: absolute; left: 12px; bottom: 12px; z-index: 2; display: flex; gap: 6px; }
+.uxs-fallback { max-width: 34rem; margin: 10vh auto 0; padding: 0 20px; }
+.uxs-fallback img { width: 100%; height: auto; border-radius: 8px; margin: 16px 0; }
+.sr-only {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+body.uxs-thumbnail .uxs-controls, body.uxs-thumbnail .uxs-panel, body.uxs-thumbnail .uxs-extra { display: none; }
