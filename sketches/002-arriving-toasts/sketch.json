@@ -1,0 +1,12 @@
+{
+  "number": 2,
+  "slug": "002-arriving-toasts",
+  "title": "ARRIVING TOASTS",
+  "date": "2026-11-26",
+  "component": "Toast notification",
+  "question": "What if notifications had weight?",
+  "note": "Toasts drop onto a shelf every few seconds and pile up until the oldest gets shoved off the end. Dismissing one means flicking it at the floor, where it lands on the sketch's own label and smears the ink. Give notifications mass and the backlog becomes visible: you can see the pile you're ignoring, and clearing it leaves marks.",
+  "tools": ["Three.js", "Rapier", "Web Audio"],
+  "floorText": "ink",
+  "categories": ["3D", "INTERACTION", "MOTION"]
+}

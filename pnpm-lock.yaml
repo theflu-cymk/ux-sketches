@@ -156,6 +156,18 @@ importers:
         specifier: ^0.53.1
         version: 0.53.1(three@0.187.0)
 
+  sketches/002-arriving-toasts:
+    dependencies:
+      '@dimforge/rapier3d-compat':
+        specifier: ^0.21.0
+        version: 0.21.0
+      '@ux-sketches/stage':
+        specifier: workspace:*
+        version: link:../../packages/stage
+      three:
+        specifier: ^0.187.0
+        version: 0.187.0
+
 packages:
 
   '@dimforge/rapier3d-compat@0.12.0':
