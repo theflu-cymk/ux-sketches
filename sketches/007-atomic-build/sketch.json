@@ -1,0 +1,12 @@
+{
+  "number": 7,
+  "slug": "007-atomic-build",
+  "title": "ATOMIC BUILD",
+  "date": "2026-11-26",
+  "component": "Design system",
+  "question": "What are you building, one atom at a time?",
+  "note": "Atomic design, played as a guessing game. The camera stays in tight on colour chips, type samples and loose tiles while they snap into icons, then bars, a dock, a grey wireframe, and only at the last step pulls back to show a phone home screen. Hiding the whole makes the point better than a diagram: every screen you know is a stack of tiny decisions you never notice until they're stripped back to parts.",
+  "tools": ["Three.js", "troika-three-text", "Web Audio"],
+  "floorText": "print",
+  "categories": ["3D", "INTERACTION", "MOTION"]
+}
