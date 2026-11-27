@@ -3,9 +3,9 @@
   "slug": "008-box-model",
   "title": "BOX MODEL",
   "date": "2026-11-26",
-  "component": "Card layout",
-  "question": "What if spacing were things you could touch?",
-  "note": "Spacing, made physical. Padding is foam inside each card's walls: thicken it and the content gets squeezed while the card's outside never moves. Margin is a glassy shell around each card that shoves its neighbours away. Gutters are channels on the floor between them, and marbles only roll through once the gap is wide enough to let them. The CSS updates underneath the whole time, so the three words stop being vocabulary and start being things with different jobs.",
+  "component": "Layout system",
+  "question": "What is a layout made of?",
+  "note": "A zoom-out through layout, played at 140 BPM. A content box pulses on the beat; on every fourth beat the camera pulls back and the next layer springs out from its edges: padding, border, margin, border-box, block and inline flow, flex items, the container and its axes, basis, grow and shrink, align-self and align-content, a responsive card, and finally the screens it re-flows across. Drag to orbit, scroll or pinch to zoom. Seeing each idea literally contain the last makes the vocabulary a single structure instead of a list.",
   "tools": [
     "Three.js",
     "troika-three-text",
@@ -14,6 +14,7 @@
   "floorText": "print",
   "categories": [
     "3D",
+    "MOTION",
     "INTERACTION"
   ]
 }
