@@ -26,3 +26,19 @@ export function layoutRow(count: number, cardWidth: number, s: BoxState, pxToM: 
 export function cssFor(s: BoxState): string[] {
   return [`padding: ${s.padding}px;`, `margin: ${s.margin}px;`, `gap: ${s.gap}px;`]
 }
+
+export type HandleKind = 'padding' | 'margin'
+
+/**
+ * Where a handle sits, relative to its card's centre: the padding handle on the content's right edge, the
+ * margin handle on the margin shell's right edge. Handles live on the middle card, which never moves.
+ */
+export function handleX(kind: HandleKind, s: BoxState, cardWidth: number, pxToM: number): number {
+  return kind === 'padding' ? cardWidth / 2 - s.padding * pxToM : cardWidth / 2 + s.margin * pxToM
+}
+
+/** The value a handle dragged to `x` (relative to the middle card's centre) asks for, clamped and rounded. */
+export function fromHandle(kind: HandleKind, x: number, cardWidth: number, pxToM: number): number {
+  const raw = kind === 'padding' ? (cardWidth / 2 - x) / pxToM : (x - cardWidth / 2) / pxToM
+  return Math.round(Math.max(0, Math.min(MAX[kind], raw)))
+}

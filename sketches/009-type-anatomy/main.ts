@@ -3,7 +3,7 @@ import { Text } from 'troika-three-text'
 import { CAP_HEIGHT, FONTS, PALETTE, createDrag, createStage, type SketchMeta } from '@ux-sketches/stage'
 import '@ux-sketches/stage/stage.css'
 import meta from './sketch.json' with { type: 'json' }
-import { BASE_GUIDES, PARTS, clampGuides, nextPart, scalesFor, type Guides, type PartId } from './anatomy.ts'
+import { BASE_GUIDES, PARTS, clampGuides, nextPart, nudgeGuide, scalesFor, type Guides, type PartId } from './anatomy.ts'
 import { C, buildSpecimen } from './glyphs.ts'
 
 const stage = await createStage(document.getElementById('stage')!, { meta: meta as SketchMeta, sound: true })
@@ -81,8 +81,10 @@ if (stage) {
     calloutDef.text = info ? info.definition : 'Every letter is built from named parts.'
     calloutName.sync()
     calloutDef.sync()
+    const guide = guideList.find((g) => g.part === part)
+    if (guide) calloutDef.text = `${info!.definition} Drag it, or press ↑ ↓.`
     if (info) {
-      status.textContent = `${info.name}: ${info.definition}`
+      status.textContent = `${info.name}: ${info.definition}${guide ? ' Press the up and down arrows to move it.' : ''}`
       sound.tick({ pitch: 0.8 + PARTS.indexOf(info) * 0.06 })
     }
   }
@@ -123,6 +125,18 @@ if (stage) {
       const s = scalesFor(guides, BASE_GUIDES)
       status.textContent = `Baseline ${guides.baseline.toFixed(2)} m, x-height ${(s.x * 100).toFixed(0)}%, cap height ${(s.cap * 100).toFixed(0)}%.`
     },
+  })
+
+  // Keyboard: with a guide selected, the up and down arrows move it.
+  document.addEventListener('keydown', (e) => {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.target instanceof HTMLInputElement) return
+    const guide = guideList.find((g) => g.part === selected)
+    if (!guide || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return
+    e.preventDefault()
+    guides = nudgeGuide(guides, guide.key, e.key === 'ArrowUp' ? 1 : -1)
+    const s = scalesFor(guides, BASE_GUIDES)
+    status.textContent = `${PARTS.find((p) => p.id === guide.part)!.name} moved. Lowercase ${(s.x * 100).toFixed(0)}%, capitals ${(s.cap * 100).toFixed(0)}%.`
+    sound.tick({ pitch: 0.7 + s.x * 0.3 })
   })
 
   // Keyboard: step through the parts.

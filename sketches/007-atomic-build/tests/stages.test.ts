@@ -46,3 +46,19 @@ test('each stage has a different shot', () => {
   const ps = [0, 1, 2, 3, 4].map((i) => shotFor(i, 16 / 9).position.join(','))
   assert.equal(new Set(ps).size, 5)
 })
+
+test('shotFor(4) also shows the floor heading and question', async () => {
+  const { floorBlock } = await import('../../../packages/stage/src/camera.ts')
+  for (const aspect of ASPECTS) {
+    const s = shotFor(4, aspect)
+    const cam = new PerspectiveCamera(s.fov, aspect, 0.01, 50)
+    cam.position.set(...s.position)
+    cam.lookAt(new Vector3(...s.target))
+    cam.updateMatrixWorld()
+    const b = floorBlock(aspect)
+    for (const [x, z] of [[-b.halfWidth, b.headingZ], [b.halfWidth, b.headingZ], [-b.halfWidth, b.questionZ], [b.halfWidth, b.questionZ]]) {
+      const n = new Vector3(x, 0, z).project(cam)
+      assert.ok(Math.abs(n.x) <= 0.95 && Math.abs(n.y) <= 0.95, `floor point ${x},${z} at ${n.x.toFixed(2)},${n.y.toFixed(2)}`)
+    }
+  }
+})

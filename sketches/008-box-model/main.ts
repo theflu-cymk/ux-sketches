@@ -3,7 +3,7 @@ import { Text } from 'troika-three-text'
 import { CAP_HEIGHT, FONTS, PALETTE, createDrag, createStage, type SketchMeta } from '@ux-sketches/stage'
 import '@ux-sketches/stage/stage.css'
 import meta from './sketch.json' with { type: 'json' }
-import { MAX, PX, cssFor, layoutRow, type BoxState } from './box.ts'
+import { MAX, PX, cssFor, fromHandle, handleX, layoutRow, type BoxState } from './box.ts'
 
 const stage = await createStage(document.getElementById('stage')!, { meta: meta as SketchMeta, sound: true })
 
@@ -47,7 +47,7 @@ if (stage) {
   const marbles: Array<{ mesh: Mesh; gutter: number; z: number }> = []
   let spawnClock = 0
 
-  // Handles on the first card: drag the inner one for padding, the outer one for margin.
+  // Handles on the middle card (which never moves as the row reflows): inner one for padding, outer for margin.
   const handleMat = new MeshStandardMaterial({ color: '#1d1c1a', roughness: 0.4 })
   const padHandle = shadow(new Mesh(new SphereGeometry(0.022, 20, 16), handleMat))
   const marginHandle = shadow(new Mesh(new SphereGeometry(0.022, 20, 16), new MeshStandardMaterial({ color: '#2f7de1', roughness: 0.4 })))
@@ -131,11 +131,9 @@ if (stage) {
       dragging = hit.object === padHandle ? 'padding' : 'margin'
     },
     onMove(point) {
-      const c = cards[0]
-      const scale = row.scale.x
-      const local = (point.x - row.position.x) / scale - c.x
-      if (dragging === 'padding') set('padding', (W / 2 - local) / PX)
-      if (dragging === 'margin') set('margin', (local - W / 2) / PX)
+      if (!dragging) return
+      const local = (point.x - row.position.x) / row.scale.x - cards[1].x
+      set(dragging, fromHandle(dragging, local, W, PX))
     },
     onEnd() {
       dragging = null
@@ -168,10 +166,10 @@ if (stage) {
       c.shell.scale.set(W + 2 * m, H + 2 * m, 1)
       c.shell.visible = m > 0.0005
     })
-    // Handles ride the first card's padding edge and margin edge.
-    const c0 = cards[0]
-    padHandle.position.set(c0.x + c0.inner / 2, LIFT + H + 0.04, D)
-    marginHandle.position.set(c0.x + W / 2 + state.margin * PX, LIFT + H + 0.09, D)
+    // Handles ride the middle card's padding edge and margin edge.
+    const c1 = cards[1]
+    padHandle.position.set(c1.x + c1.inner / 2, LIFT + H + 0.04, D)
+    marginHandle.position.set(c1.x + handleX('margin', state, W, PX), LIFT + H + 0.09, D)
 
     // Gutter marbles: radius fits the gap; none if the gap is too narrow or motion is reduced.
     const gapM = state.gap * PX * row.scale.x

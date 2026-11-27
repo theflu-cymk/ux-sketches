@@ -47,3 +47,11 @@ export function nextPart(current: PartId | null, dir: 1 | -1): PartId {
   const i = current === null ? (dir === 1 ? -1 : 0) : PARTS.findIndex((p) => p.id === current)
   return PARTS[(i + dir + PARTS.length) % PARTS.length].id
 }
+
+/** Keyboard step for a guide, in metres. */
+export const GUIDE_STEP = 0.02
+
+/** Moves one guide a keyboard step up (1) or down (-1), keeping the guide rules. */
+export function nudgeGuide(g: Guides, key: keyof Guides, dir: 1 | -1): Guides {
+  return clampGuides({ ...g, [key]: g[key] + dir * GUIDE_STEP })
+}

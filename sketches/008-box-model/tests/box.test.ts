@@ -42,3 +42,16 @@ test('layoutRow total stays within the stage width', () => {
 test('cssFor formats each rule', () => {
   assert.deepEqual(cssFor({ padding: 24, margin: 16, gap: 8 }), ['padding: 24px;', 'margin: 16px;', 'gap: 8px;'])
 })
+
+test('handles on the middle card track the pointer and stay put as the row reflows', async () => {
+  const { handleX, fromHandle } = await import('../box.ts')
+  for (const x of [0.21, 0.25, 0.28, 0.31]) {
+    const margin = fromHandle('margin', x, W, PX)
+    const s = { ...base, margin }
+    const mid = layoutRow(3, W, s, PX)[1]
+    assert.ok(Math.abs(mid.x) < 1e-9, 'the middle card never moves')
+    assert.ok(Math.abs(mid.x + handleX('margin', s, W, PX) - x) < PX, `margin handle at ${x}`)
+  }
+  const padding = fromHandle('padding', 0.15, W, PX)
+  assert.ok(Math.abs(handleX('padding', { ...base, padding }, W, PX) - 0.15) < PX)
+})

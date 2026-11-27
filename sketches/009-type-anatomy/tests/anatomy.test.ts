@@ -47,3 +47,13 @@ test('clampGuides caps the x-height at 1.5× its natural size', () => {
   const natural = BASE_GUIDES.xHeight - BASE_GUIDES.baseline
   assert.ok(g.xHeight - g.baseline <= natural * 1.5 + 1e-9)
 })
+
+test('nudgeGuide moves one guide by keyboard steps and keeps the rules', async () => {
+  const { nudgeGuide } = await import('../anatomy.ts')
+  const up = nudgeGuide(BASE_GUIDES, 'xHeight', 1)
+  assert.ok(up.xHeight > BASE_GUIDES.xHeight)
+  assert.equal(up.capHeight, BASE_GUIDES.capHeight)
+  let g = BASE_GUIDES
+  for (let i = 0; i < 100; i++) g = nudgeGuide(g, 'xHeight', -1)
+  assert.ok(g.xHeight - g.baseline >= MIN_GAP - 1e-9)
+})
