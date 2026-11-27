@@ -1,4 +1,3 @@
-export const BPM = 140
 export const BEATS_PER_LEVEL = 4
 
 export type LevelId =
@@ -27,16 +26,31 @@ export const LEVELS: Array<{ id: LevelId; name: string; line: string }> = [
 ]
 
 /**
- * Where we are at time `t` seconds: the level, the beat within it (0–3), the phase within the beat (0–1),
- * and the transition (0→1 across the fourth beat, when the next level springs out). Loops after `count`.
+ * Where we are at time `t` (seconds into the track), from the list of strong hits: the hit we're on, the
+ * beat within its phrase of four (0–3), the phase towards the next hit (0–1), the level (one per phrase,
+ * looping through `count`), and the transition (0→1 across the fourth hit, when the next level springs out).
+ * Before the first hit the first level holds, unpulsed (phase 1).
  */
-export function beatAt(t: number, bpm: number, count: number): { level: number; beat: number; phase: number; transition: number } {
-  const beats = Math.max(0, t) / (60 / bpm)
-  const whole = Math.floor(beats)
-  const phase = beats - whole
-  const beat = whole % BEATS_PER_LEVEL
-  const level = Math.floor(whole / BEATS_PER_LEVEL) % count
-  return { level, beat, phase, transition: beat === BEATS_PER_LEVEL - 1 ? phase : 0 }
+export function hitAt(t: number, hits: number[], count: number): { hit: number; beat: number; phase: number; level: number; transition: number } {
+  if (!hits.length || t < hits[0]) return { hit: 0, beat: 0, phase: 1, level: 0, transition: 0 }
+  let lo = 0
+  let hi = hits.length - 1
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1
+    if (hits[mid] <= t) lo = mid
+    else hi = mid - 1
+  }
+  const span = lo + 1 < hits.length ? hits[lo + 1] - hits[lo] : lo > 0 ? hits[lo] - hits[lo - 1] : 1
+  const phase = Math.min(1, (t - hits[lo]) / span)
+  const beat = lo % BEATS_PER_LEVEL
+  const last = lo === hits.length - 1
+  return {
+    hit: lo,
+    beat,
+    phase,
+    level: Math.floor(lo / BEATS_PER_LEVEL) % count,
+    transition: beat === BEATS_PER_LEVEL - 1 && !last ? phase : 0,
+  }
 }
 
 /** A springy 0→1: overshoots and settles by x = 1. */

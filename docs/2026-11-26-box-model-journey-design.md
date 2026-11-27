@@ -31,3 +31,13 @@ item inside a container inside a component inside a screen.
   way CSS does.
 - Reduced motion: no pulse, no spring; levels step every 2 s with plain cuts.
 - The floor question becomes "What is a layout made of?".
+
+## Update 2026-11-27: mapped to "Pressure Redux" (Brian's original track)
+
+- The motion follows the track's strong hits (kick and snare: the half-time of its steady 149.7 BPM grid),
+  measured from the shipped MP3 by `sketches/008-box-model/tools/beat-map.mjs` into `hits.json` (375 hits;
+  phrases of four start at the first hit, the downbeat chosen from kick weight and low-end change).
+- Sound on plays the track (128 kbps MP3, ~4.9 MB, loops) and its playback position drives the motion; sound
+  off runs the same hit timeline silently. The 140 BPM ticks are gone.
+- If a phrase feels one hit early or late by ear, change `downbeat` handling by re-running the tool or
+  trimming `hits` in `hits.json`; no code changes needed.

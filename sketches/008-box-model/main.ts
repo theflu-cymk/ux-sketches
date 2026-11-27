@@ -3,14 +3,21 @@ import { Text } from 'troika-three-text'
 import { CAP_HEIGHT, FONTS, PALETTE, cameraFor, createStage, type SketchMeta } from '@ux-sketches/stage'
 import '@ux-sketches/stage/stage.css'
 import meta from './sketch.json' with { type: 'json' }
-import { BEATS_PER_LEVEL, BPM, LEVELS, beatAt, flexLayout, springOut, type FlexItem } from './journey.ts'
+import { LEVELS, flexLayout, hitAt, springOut, type FlexItem } from './journey.ts'
+import beatMap from './hits.json' with { type: 'json' }
 
 const stage = await createStage(document.getElementById('stage')!, { meta: meta as SketchMeta, sound: true })
 
 if (stage) {
   const { scene, camera, sound } = stage
   const COUNT = LEVELS.length
-  const BEAT = 60 / BPM
+  /** The strong hits of the track (kick and snare), from tools/beat-map.mjs. Everything moves to these. */
+  const HITS: number[] = beatMap.hits
+  const DURATION: number = beatMap.duration
+  // The track itself plays when the visitor turns sound on; the motion follows the same hits either way.
+  const audio = new Audio('pressure-redux.mp3')
+  audio.loop = true
+  audio.preload = 'none'
   /** The current level always fills about this much of the stage, in metres. */
   const FIT = { w: 1.7, h: 0.78 }
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t
@@ -254,7 +261,10 @@ if (stage) {
   }
   syncPlay()
   playBtn.addEventListener('click', () => ((playing = !playing), syncPlay()))
-  restartBtn.addEventListener('click', () => (clock = 0))
+  restartBtn.addEventListener('click', () => {
+    clock = 0
+    audio.currentTime = 0
+  })
   extra.append(playBtn, restartBtn, readout)
   if (!stage.thumbnail) stage.container.append(extra)
 
@@ -315,26 +325,23 @@ if (stage) {
   const offset = new Vector3()
   const side = new Vector3()
   let shownLevel = -1
-  let lastBeat = -1
   const anim = { bW: basis[1].basis, cW: basis[2].basis, cY0: itemsY[0] as number, right: basisRight, top: containerTop, line2: itemsY[1] + GAP }
 
   stage.onFrame((dt) => {
-    if (playing) clock += dt
+    // The clock: the track's own position while it plays, otherwise our own, on the same timeline.
+    const wantAudio = sound.enabled && playing
+    if (wantAudio && audio.paused) {
+      audio.currentTime = clock % DURATION
+      void audio.play().catch(() => {})
+    } else if (!wantAudio && !audio.paused) audio.pause()
+    if (!audio.paused) clock = audio.currentTime
+    else if (playing) clock = (clock + dt) % DURATION
     const reduced = stage.reducedMotion
-    // Reduced motion: a new level every 2 s, plain cuts, no pulse.
-    const t = reduced ? Math.floor(clock / 2) * BEATS_PER_LEVEL * BEAT : clock
-    const b = beatAt(t, BPM, COUNT)
+    // Reduced motion: levels still change on the music's phrases, but with plain cuts and no pulse.
+    const b = hitAt(clock, HITS, COUNT)
     const cur = b.level
     const next = (cur + 1) % COUNT
     const tr = reduced || next === 0 ? 0 : b.transition
-    const whole = Math.floor(t / BEAT)
-    if (whole !== lastBeat) {
-      lastBeat = whole
-      if (playing && !reduced) {
-        if (b.beat === BEATS_PER_LEVEL - 1) sound.thunk({ gain: 0.3, pitch: 1.5 })
-        else sound.tick({ pitch: 0.9 + b.beat * 0.1 })
-      }
-    }
 
     // Which parts show, the level springing out, and the pulse.
     levels.forEach((lv, i) => {
@@ -410,6 +417,7 @@ if (stage) {
 
   stage.onReset(() => {
     clock = 0
+    audio.currentTime = 0
     az = el = 0
     zoom = 1
     playing = true
@@ -417,7 +425,7 @@ if (stage) {
   })
 
   if (stage.thumbnail) {
-    clock = BEAT * BEATS_PER_LEVEL * 10 + BEAT * 0.2
+    clock = HITS[40] + 0.1
     setTimeout(() => {
       playing = false
       stage.ready()
