@@ -1,0 +1,19 @@
+{
+  "number": 8,
+  "slug": "008-box-model",
+  "title": "BOX MODEL",
+  "date": "2026-11-26",
+  "component": "Card layout",
+  "question": "What if spacing were things you could touch?",
+  "note": "Spacing, made physical. Padding is foam inside each card's walls: thicken it and the content gets squeezed while the card's outside never moves. Margin is a glassy shell around each card that shoves its neighbours away. Gutters are channels on the floor between them, and marbles only roll through once the gap is wide enough to let them. The CSS updates underneath the whole time, so the three words stop being vocabulary and start being things with different jobs.",
+  "tools": [
+    "Three.js",
+    "troika-three-text",
+    "Web Audio"
+  ],
+  "floorText": "print",
+  "categories": [
+    "3D",
+    "INTERACTION"
+  ]
+}
