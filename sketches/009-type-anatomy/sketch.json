@@ -1,0 +1,12 @@
+{
+  "number": 9,
+  "slug": "009-type-anatomy",
+  "title": "TYPE ANATOMY",
+  "date": "2026-11-26",
+  "component": "Typeface",
+  "question": "What is a letter made of?",
+  "note": "A specimen word built from separate strokes, so every part of a letter can be picked up. Hover or tap and the bowl, counter, ear, stem or terminal lifts out and names itself; drag the baseline, x-height or cap-height lines and the letters stretch to follow. Type terms usually arrive as a labelled diagram to memorise. Pulling the pieces out one at a time turns them into a vocabulary you can see in every word afterwards.",
+  "tools": ["Three.js", "troika-three-text", "Web Audio"],
+  "floorText": "print",
+  "categories": ["3D", "INTERACTION"]
+}

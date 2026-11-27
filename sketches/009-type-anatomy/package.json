@@ -1,0 +1,10 @@
+{
+  "name": "009-type-anatomy",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@ux-sketches/stage": "workspace:*",
+    "three": "^0.187.0",
+    "troika-three-text": "^0.53.1"
+  }
+}
