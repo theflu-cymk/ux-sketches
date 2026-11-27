@@ -3,7 +3,7 @@ import { Text } from 'troika-three-text'
 import { CAP_HEIGHT, FONTS, PALETTE, createDrag, createStage, type SketchMeta } from '@ux-sketches/stage'
 import '@ux-sketches/stage/stage.css'
 import meta from './sketch.json' with { type: 'json' }
-import { BASE_GUIDES, PARTS, clampGuides, nextPart, nudgeGuide, scalesFor, type Guides, type PartId } from './anatomy.ts'
+import { BASE_GUIDES, PARTS, moveGuide, nextPart, nudgeGuide, scalesFor, type Guides, type PartId } from './anatomy.ts'
 import { C, buildSpecimen } from './glyphs.ts'
 
 const stage = await createStage(document.getElementById('stage')!, { meta: meta as SketchMeta, sound: true })
@@ -19,7 +19,7 @@ if (stage) {
   let guides: Guides = { ...BASE_GUIDES }
 
   // Guide lines across the word: baseline, x-height, cap height. Each is draggable and is a part too.
-  type Guide = { key: keyof Guides; part: PartId; bar: Mesh; hit: Mesh; label: Text }
+  type Guide = { key: keyof Guides; part: PartId; bar: Mesh; hits: Mesh[]; label: Text }
   const guideMat = new MeshBasicMaterial({ color: '#4a4844' })
   const guideList: Guide[] = (
     [
@@ -31,9 +31,14 @@ if (stage) {
     const bar = new Mesh(new BoxGeometry(width + 0.3, 0.005, 0.005), guideMat.clone())
     bar.position.z = 0.04
     bar.userData.part = part
-    const hit = new Mesh(new BoxGeometry(width + 0.3, 0.05, 0.02), new MeshBasicMaterial({ visible: false }))
-    hit.userData.guide = key
-    hit.userData.part = part
+    // Grab zones only at the two ends of the line, outside the word, so pressing a letter never drags a guide.
+    const hits = [-1, 1].map((side) => {
+      const hit = new Mesh(new BoxGeometry(0.13, 0.06, 0.02), new MeshBasicMaterial({ visible: false }))
+      hit.position.x = side * ((width + 0.3) / 2 - 0.065)
+      hit.userData.guide = key
+      hit.userData.part = part
+      return hit
+    })
     const label = new Text()
     label.text = text
     label.font = FONTS.medium
@@ -44,9 +49,9 @@ if (stage) {
     label.position.set(-(width + 0.3) / 2, 0.008, 0.04)
     label.sync()
     const g = new Group()
-    g.add(bar, hit, label)
+    g.add(bar, ...hits, label)
     root.add(g)
-    return { key, part, bar, hit, label }
+    return { key, part, bar, hits, label }
   })
 
   // The callout: the part's name and definition, above the word.
@@ -73,7 +78,7 @@ if (stage) {
 
   let selected: PartId | null = null
   const lift: Record<string, number> = {}
-  const select = (part: PartId | null) => {
+  const select = (part: PartId | null, announce = true) => {
     if (part === selected) return
     selected = part
     const info = PARTS.find((p) => p.id === part)
@@ -83,7 +88,7 @@ if (stage) {
     calloutDef.sync()
     const guide = guideList.find((g) => g.part === part)
     if (guide) calloutDef.text = `${info!.definition} Drag it, or press ↑ ↓.`
-    if (info) {
+    if (info && announce) {
       status.textContent = `${info.name}: ${info.definition}${guide ? ' Press the up and down arrows to move it.' : ''}`
       sound.tick({ pitch: 0.8 + PARTS.indexOf(info) * 0.06 })
     }
@@ -97,19 +102,28 @@ if (stage) {
     const r = stage.canvas.getBoundingClientRect()
     ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1)
     ray.setFromCamera(ndc, stage.camera)
-    const hit = ray.intersectObjects([...meshes, ...guideList.map((g) => g.hit)], false).find((h) => (h.object as Object3D).userData.part)
+    const hit = ray.intersectObjects([...meshes, ...guideList.flatMap((g) => g.hits)], false).find((h) => (h.object as Object3D).userData.part)
     return hit ? (hit.object.userData.part as PartId) : null
   }
   let draggingGuide: keyof Guides | null = null
+  let justDragged = false
+  // Hover previews a part (callout only); clicks and keys also announce it.
   stage.canvas.addEventListener('pointermove', (e) => {
     if (draggingGuide || e.pointerType === 'touch') return
     const part = partAt(e)
-    if (part) select(part)
+    if (part) select(part, false)
   })
-  stage.canvas.addEventListener('click', (e) => select(partAt(e)))
+  stage.canvas.addEventListener('click', (e) => {
+    if (justDragged) return void (justDragged = false)
+    const part = partAt(e)
+    if (part === selected && part) {
+      const info = PARTS.find((p) => p.id === part)!
+      status.textContent = `${info.name}: ${info.definition}`
+    } else select(part)
+  })
 
   createDrag(stage, {
-    targets: guideList.map((g) => g.hit),
+    targets: guideList.flatMap((g) => g.hits),
     plane: 'vertical',
     onStart(hit) {
       draggingGuide = hit.object.userData.guide as keyof Guides
@@ -118,7 +132,8 @@ if (stage) {
     onMove(point) {
       if (!draggingGuide) return
       const y = (point.y - root.position.y) / root.scale.y
-      guides = clampGuides({ ...guides, [draggingGuide]: y })
+      guides = moveGuide(guides, draggingGuide, y)
+      justDragged = true
     },
     onEnd() {
       draggingGuide = null

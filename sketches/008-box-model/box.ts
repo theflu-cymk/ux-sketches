@@ -42,3 +42,11 @@ export function fromHandle(kind: HandleKind, x: number, cardWidth: number, pxToM
   const raw = kind === 'padding' ? (cardWidth / 2 - x) / pxToM : (x - cardWidth / 2) / pxToM
   return Math.round(Math.max(0, Math.min(MAX[kind], raw)))
 }
+
+/** The cards' border-box size and the frame around them, in metres. */
+export const CARD = { width: 0.5, height: 0.58, border: 0.012 }
+
+/** Scale for a row `total` metres wide so it fits the view: 1.9 m on wide screens, 1.05 m in portrait. */
+export function fitScale(total: number, aspect: number): number {
+  return Math.min(1, (aspect < 1 ? 1.05 : 1.9) / total)
+}

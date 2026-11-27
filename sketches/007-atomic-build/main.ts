@@ -1,14 +1,18 @@
 import {
+  BufferGeometry,
   CanvasTexture,
   CircleGeometry,
   Color,
   Group,
+  LineBasicMaterial,
+  LineLoop,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
   PlaneGeometry,
   RingGeometry,
   SRGBColorSpace,
+  Shape,
   Vector3,
   type Material,
 } from 'three'
@@ -52,6 +56,22 @@ if (stage) {
   wallpaper.position.set(0, PHONE.bottom + PHONE.height / 2, -0.004)
   screen.add(wallpaper)
 
+  /** How far into the template stage (grey wireframe blocks) we are: 0 outside it, 1 at its centre. */
+  const template = (p: number) => smooth(2.5, 3, p) * (1 - smooth(3.5, 4, p))
+  const roundedRect = (w: number, h: number, r: number) => {
+    const sh = new Shape()
+    sh.moveTo(-w / 2 + r, -h / 2)
+    sh.lineTo(w / 2 - r, -h / 2)
+    sh.quadraticCurveTo(w / 2, -h / 2, w / 2, -h / 2 + r)
+    sh.lineTo(w / 2, h / 2 - r)
+    sh.quadraticCurveTo(w / 2, h / 2, w / 2 - r, h / 2)
+    sh.lineTo(-w / 2 + r, h / 2)
+    sh.quadraticCurveTo(-w / 2, h / 2, -w / 2, h / 2 - r)
+    sh.lineTo(-w / 2, -h / 2 + r)
+    sh.quadraticCurveTo(-w / 2, -h / 2, -w / 2 + r, -h / 2)
+    return new BufferGeometry().setFromPoints(sh.getPoints(12))
+  }
+
   // ---- Helpers: everything fades and greys out by stage.
   type Part = { obj: Mesh | Text; mat: MeshStandardMaterial | MeshBasicMaterial; color: Color; show: (p: number) => number; grey?: boolean }
   const parts: Part[] = []
@@ -74,8 +94,8 @@ if (stage) {
   }
 
   // ---- Icons: rounded tiles with original glyphs and generic labels. Atoms first: loose, scattered chips.
-  const NAMES = ['Mail', 'Notes', 'Clock', 'Maps', 'Music', 'Photos', 'Camera', 'Weather', 'Files', 'News', 'Wallet', 'Health', 'Books', 'Calc', 'Timer', 'Settings']
-  const COLORS = ['#3d8bfd', '#ffc83d', '#1d1d1f', '#34c38f', '#ff4f6d', '#ff9f43', '#5b5b61', '#4fb3ff', '#2f6fde', '#ff5a4f', '#222226', '#ff6b8b', '#ff8c2a', '#5c5c60', '#ff9f0a', '#8e8e93']
+  const NAMES = ['Inbox', 'Sketch', 'Alarm', 'Route', 'Tunes', 'Album', 'Lens', 'Sky', 'Docs', 'Feed', 'Cards', 'Pulse', 'Shelf', 'Sums', 'Focus', 'Prefs']
+  const COLORS = ['#ff5a1f', '#2bb3a3', '#6c4fd8', '#c7e04a', '#f2a541', '#e5487b', '#1f6f8b', '#7ac4f0', '#9b5de5', '#f15bb5', '#00a878', '#fee440', '#ff8c61', '#3a86ff', '#8ac926', '#495057']
   const GLYPHS = ['ring', 'bar', 'ring', 'tri', 'dot', 'dot', 'ring', 'dot', 'bar', 'bar', 'bar', 'tri', 'bar', 'dot', 'ring', 'ring']
   const ICON = 0.12
   const iconSpot = (i: number): [number, number] => [-0.24 + (i % 4) * 0.16, 1.33 - Math.floor(i / 4) * 0.19]
@@ -96,11 +116,11 @@ if (stage) {
       : kind === 'bar' ? new Mesh(new PlaneGeometry(0.055, 0.014), glyphMat)
       : new Mesh(new CircleGeometry(0.026, 24), glyphMat)
     glyph.position.z = 0.0105
-    g.add(track(glyph, glyphMat, (p) => smooth(0.3, 0.9, p)))
+    g.add(track(glyph, glyphMat, (p) => smooth(0.3, 0.9, p) * (1 - template(p))))
     if (withLabel) {
       const { t, m } = label(name, 0.024, '#ffffff')
       t.position.set(0, -0.085, 0.002)
-      g.add(track(t, m, (p) => smooth(0.5, 1, p)))
+      g.add(track(t, m, (p) => smooth(0.5, 1, p) * (1 - template(p))))
     }
     const home = new Vector3(x, y, 0.012)
     const a = i * 2.39
@@ -129,7 +149,7 @@ if (stage) {
   }
 
   // ---- Status bar: clock, signal bars, battery (molecules), on a bar (organism).
-  const { t: clock, m: clockMat } = label('9:41', 0.032, '#ffffff', 'bold')
+  const { t: clock, m: clockMat } = label('10:08', 0.032, '#ffffff', 'bold')
   clock.position.set(-0.22, PHONE.bottom + PHONE.height - 0.05, 0.01)
   screen.add(track(clock, clockMat, (p) => smooth(0.5, 1, p)))
   for (let i = 0; i < 4; i++) {
@@ -138,13 +158,17 @@ if (stage) {
     bar.position.set(0.16 + i * 0.013, PHONE.bottom + PHONE.height - 0.055 + i * 0.003, 0.01)
     screen.add(track(bar, m, () => 1))
   }
-  const battMat = new MeshStandardMaterial({ color: '#ffffff' })
-  const batt = new Mesh(new RoundedBoxGeometry(0.036, 0.017, 0.002, 2, 0.004), battMat)
-  batt.position.set(0.268, PHONE.bottom + PHONE.height - 0.05, 0.01)
-  screen.add(track(batt, battMat, () => 1))
+  const battY = PHONE.bottom + PHONE.height - 0.05
+  const batt = new LineLoop(roundedRect(0.036, 0.017, 0.004), new LineBasicMaterial({ color: '#ffffff' }))
+  batt.position.set(0.268, battY, 0.01)
+  screen.add(batt)
+  const levelMat = new MeshStandardMaterial({ color: '#ffffff' })
+  const level = new Mesh(new PlaneGeometry(0.024, 0.009), levelMat)
+  level.position.set(0.264, battY, 0.01)
+  screen.add(track(level, levelMat, () => 1))
   const nubMat = new MeshStandardMaterial({ color: '#ffffff' })
   const nub = new Mesh(new PlaneGeometry(0.003, 0.007), nubMat)
-  nub.position.set(0.289, PHONE.bottom + PHONE.height - 0.05, 0.01)
+  nub.position.set(0.289, battY, 0.01)
   screen.add(track(nub, nubMat, () => 1))
 
   // ---- Organisms: the dock plate and page dots.
@@ -159,13 +183,26 @@ if (stage) {
     screen.add(track(dot, m, (p) => smooth(1.4, 2, p) * (i === 0 ? 1 : 0.5)))
   }
 
+  // ---- Organism: a widget, a wide card with a big number and two bars (its molecules).
+  const widgetMat = new MeshStandardMaterial({ color: '#ffffff', roughness: 0.4 })
+  const widget = new Mesh(new RoundedBoxGeometry(PHONE.width - 0.1, 0.15, 0.015, 4, 0.04), widgetMat)
+  widget.position.set(0, 0.53, 0.008)
+  screen.add(track(widget, widgetMat, (p) => smooth(1.4, 2, p) * 0.9))
+  const { t: widgetNum, m: widgetNumMat } = label('26', 0.07, '#1d1c1a', 'bold')
+  widgetNum.position.set(-0.2, 0.53, 0.018)
+  screen.add(track(widgetNum, widgetNumMat, (p) => smooth(0.6, 1.1, p) * (1 - template(p))))
+  for (const [w, y] of [[0.3, 0.555], [0.22, 0.505]] as const) {
+    const m = new MeshStandardMaterial({ color: '#9b968e' })
+    const bar = new Mesh(new PlaneGeometry(w, 0.022), m)
+    bar.position.set(-0.07 + w / 2, y, 0.017)
+    screen.add(track(bar, m, (p) => smooth(0.6, 1.1, p)))
+  }
+
   // ---- Template: a wire outline of the screen.
-  const outlineMat = new MeshBasicMaterial({ color: '#5d5a55', transparent: true })
-  const outline = new Mesh(new RingGeometry(0.98, 1, 4, 1), outlineMat)
-  outline.rotation.z = Math.PI / 4
-  outline.scale.set((PHONE.width / 2) * Math.SQRT2, (PHONE.height / 2) * Math.SQRT2, 1)
-  outline.position.set(0, PHONE.bottom + PHONE.height / 2, 0)
-  screen.add(track(outline, outlineMat, (p) => smooth(2.5, 3, p) * (1 - smooth(3.5, 4, p)), false))
+  const outlineMat = new LineBasicMaterial({ color: '#5d5a55', transparent: true })
+  const outline = new LineLoop(roundedRect(PHONE.width, PHONE.height, 0.07), outlineMat)
+  outline.position.set(0, PHONE.bottom + PHONE.height / 2, 0.001)
+  screen.add(outline)
 
   // ---- Controls: Space / arrows, tap, and a scrub bar.
   const status = document.createElement('p')
@@ -200,14 +237,17 @@ if (stage) {
     if (next === target) return
     target = next
     scrub.value = String(target)
+    scrub.setAttribute('aria-valuetext', STAGES[target])
     scrubText.textContent = STAGES[target]
     status.textContent = `${STAGES[target]}${target === STAGES.length - 1 ? ': a phone home screen.' : '.'}`
     sound.tone(330 * 2 ** (target / 4), 0.18, { gain: 0.15 })
   }
   scrubText.textContent = STAGES[0]
+  scrub.setAttribute('aria-valuetext', STAGES[0])
   status.textContent = 'ATOMS.'
   scrub.addEventListener('input', () => setStage(Number(scrub.value)))
   document.addEventListener('keydown', (e) => {
+    if (e.altKey || e.ctrlKey || e.metaKey) return
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLButtonElement) return
     if (e.key === ' ' || e.key === 'ArrowRight') (e.preventDefault(), setStage(step(target, 1)))
     if (e.key === 'ArrowLeft') (e.preventDefault(), setStage(step(target, -1)))
@@ -217,6 +257,8 @@ if (stage) {
   // ---- Every frame: ease the stage value and the camera, then dress every part for it.
   const camPos = new Vector3()
   const camTarget = new Vector3()
+  const shotPos = new Vector3()
+  const shotTarget = new Vector3()
   let fov = 22
   let first = true
   stage.onFrame((dt) => {
@@ -226,8 +268,8 @@ if (stage) {
     const shot = shotFor(target, aspect)
     const k = stage.reducedMotion || first ? 1 : Math.min(1, dt * 2.4)
     first = false
-    camPos.lerp(new Vector3(...shot.position), k)
-    camTarget.lerp(new Vector3(...shot.target), k)
+    camPos.lerp(shotPos.set(...shot.position), k)
+    camTarget.lerp(shotTarget.set(...shot.target), k)
     fov += (shot.fov - fov) * k
     camera.fov = fov
     camera.position.copy(camPos)
@@ -247,6 +289,8 @@ if (stage) {
       part.mat.color.copy(part.color)
       if (part.grey) part.mat.color.lerp(GREY, greyness)
     }
+    outlineMat.opacity = template(p)
+    outline.visible = outlineMat.opacity > 0.01
     const page = smooth(3.5, 4, p)
     ;(wallpaper.material as MeshBasicMaterial).opacity = page
     ;(body.material as MeshStandardMaterial).opacity = page

@@ -62,3 +62,24 @@ test('shotFor(4) also shows the floor heading and question', async () => {
     }
   }
 })
+
+test('close-ups cover less than half the phone width on the phone itself', () => {
+  for (const aspect of ASPECTS) {
+    for (let i = 0; i < 4; i++) {
+      const s = shotFor(i, aspect)
+      const cam = new PerspectiveCamera(s.fov, aspect, 0.01, 50)
+      cam.position.set(...s.position)
+      cam.lookAt(new Vector3(...s.target))
+      cam.updateMatrixWorld()
+      // Where the left and right edges of the view, through the target's height, meet the phone plane z = 0.
+      const xs = [-1, 1].map((nx) => {
+        const p = new Vector3(nx, 0, 0.5).unproject(cam)
+        const dir = p.sub(cam.position).normalize()
+        const t = -cam.position.z / dir.z
+        return cam.position.x + dir.x * t
+      })
+      const span = Math.abs(xs[1] - xs[0])
+      assert.ok(span < PHONE.width / 2, `stage ${i} at aspect ${aspect.toFixed(2)} covers ${span.toFixed(3)} m of the phone`)
+    }
+  }
+})

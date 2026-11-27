@@ -15,9 +15,9 @@ test('clampGuides keeps order and minimum gaps', () => {
   const g = clampGuides({ baseline: 0.6, xHeight: 0.3, capHeight: 0.31 })
   assert.ok(g.xHeight - g.baseline >= MIN_GAP - 1e-9)
   assert.ok(g.capHeight - g.xHeight >= MIN_GAP - 1e-9)
-  assert.ok(g.baseline >= 0.05)
+  assert.ok(g.baseline >= 0.18)
   const low = clampGuides({ baseline: -1, xHeight: 0.4, capHeight: 0.7 })
-  assert.equal(low.baseline, 0.05)
+  assert.equal(low.baseline, 0.18)
 })
 
 test('clampGuides leaves valid guides alone', () => {
@@ -56,4 +56,24 @@ test('nudgeGuide moves one guide by keyboard steps and keeps the rules', async (
   let g = BASE_GUIDES
   for (let i = 0; i < 100; i++) g = nudgeGuide(g, 'xHeight', -1)
   assert.ok(g.xHeight - g.baseline >= MIN_GAP - 1e-9)
+})
+
+test('clampGuides keeps the cap height inside the frame', () => {
+  const g = clampGuides({ ...BASE_GUIDES, capHeight: 1.4 })
+  assert.ok(g.capHeight <= 0.98 + 1e-9)
+})
+
+test('clampGuides keeps the baseline high enough for descenders', () => {
+  assert.ok(clampGuides({ ...BASE_GUIDES, baseline: 0 }).baseline >= 0.18)
+})
+
+test('moveGuide shifts the whole set when the baseline moves, so x-height and cap keep their sizes', async () => {
+  const { moveGuide } = await import('../anatomy.ts')
+  const down = moveGuide(BASE_GUIDES, 'baseline', BASE_GUIDES.baseline - 0.03)
+  assert.ok(Math.abs(down.xHeight - down.baseline - (BASE_GUIDES.xHeight - BASE_GUIDES.baseline)) < 1e-9)
+  const back = moveGuide(down, 'baseline', BASE_GUIDES.baseline)
+  assert.ok(Math.abs(back.xHeight - BASE_GUIDES.xHeight) < 1e-9)
+  const x = moveGuide(BASE_GUIDES, 'xHeight', 0.55)
+  assert.equal(x.baseline, BASE_GUIDES.baseline)
+  assert.ok(Math.abs(x.xHeight - 0.55) < 1e-9)
 })

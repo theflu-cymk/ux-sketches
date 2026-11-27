@@ -22,15 +22,21 @@ export type Guides = { baseline: number; xHeight: number; capHeight: number }
 
 export const BASE_GUIDES: Guides = { baseline: 0.22, xHeight: 0.5, capHeight: 0.76 }
 export const MIN_GAP = 0.12
-const FLOOR = 0.05
+/** Lowest baseline: leaves room for the descenders above the floor. */
+const FLOOR = 0.18
+/** Highest cap height: keeps the cap line and the callout above it in frame. */
+const CEILING = 0.98
 
-/** Keeps baseline < x-height < cap height with at least MIN_GAP between each, and the baseline off the floor. */
+/**
+ * Keeps baseline < x-height < cap height with at least MIN_GAP between each, the baseline high enough for
+ * descenders and the cap height inside the frame.
+ */
 export function clampGuides(g: Guides): Guides {
-  const baseline = Math.max(FLOOR, Math.min(g.baseline, 1.4 - 2 * MIN_GAP))
+  const baseline = Math.max(FLOOR, Math.min(g.baseline, CEILING - 2 * MIN_GAP))
   // Lowercase can grow to 1.5× its natural x-height: beyond that the ascenders leave the frame.
   const maxX = baseline + (BASE_GUIDES.xHeight - BASE_GUIDES.baseline) * 1.5
-  const xHeight = Math.max(baseline + MIN_GAP, Math.min(g.xHeight, maxX, 1.4 - MIN_GAP))
-  const capHeight = Math.max(xHeight + MIN_GAP, Math.min(g.capHeight, 1.4))
+  const xHeight = Math.max(baseline + MIN_GAP, Math.min(g.xHeight, maxX, CEILING - MIN_GAP))
+  const capHeight = Math.max(xHeight + MIN_GAP, Math.min(g.capHeight, CEILING))
   return { baseline, xHeight, capHeight }
 }
 
@@ -51,7 +57,17 @@ export function nextPart(current: PartId | null, dir: 1 | -1): PartId {
 /** Keyboard step for a guide, in metres. */
 export const GUIDE_STEP = 0.02
 
+/**
+ * Moves one guide to `value`. Moving the baseline moves the whole set (the letters sit on it), so the
+ * x-height and cap height keep their sizes; the move stops where the floor or the frame would cut them.
+ */
+export function moveGuide(g: Guides, key: keyof Guides, value: number): Guides {
+  if (key !== 'baseline') return clampGuides({ ...g, [key]: value })
+  const delta = Math.max(FLOOR - g.baseline, Math.min(value - g.baseline, CEILING - g.capHeight))
+  return clampGuides({ baseline: g.baseline + delta, xHeight: g.xHeight + delta, capHeight: g.capHeight + delta })
+}
+
 /** Moves one guide a keyboard step up (1) or down (-1), keeping the guide rules. */
 export function nudgeGuide(g: Guides, key: keyof Guides, dir: 1 | -1): Guides {
-  return clampGuides({ ...g, [key]: g[key] + dir * GUIDE_STEP })
+  return moveGuide(g, key, g[key] + dir * GUIDE_STEP)
 }

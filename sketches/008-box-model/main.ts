@@ -3,17 +3,17 @@ import { Text } from 'troika-three-text'
 import { CAP_HEIGHT, FONTS, PALETTE, createDrag, createStage, type SketchMeta } from '@ux-sketches/stage'
 import '@ux-sketches/stage/stage.css'
 import meta from './sketch.json' with { type: 'json' }
-import { MAX, PX, cssFor, fromHandle, handleX, layoutRow, type BoxState } from './box.ts'
+import { CARD, MAX, PX, cssFor, fitScale, fromHandle, handleX, layoutRow, type BoxState } from './box.ts'
 
 const stage = await createStage(document.getElementById('stage')!, { meta: meta as SketchMeta, sound: true })
 
 if (stage) {
   const { scene, sound } = stage
   const COUNT = 3
-  const W = 0.5
-  const H = 0.58
+  const W = CARD.width
+  const H = CARD.height
   const D = 0.05
-  const BORDER = 0.012
+  const BORDER = CARD.border
   const LIFT = 0.04
   const state: BoxState = { padding: 16, margin: 12, gap: 16 }
 
@@ -22,7 +22,7 @@ if (stage) {
   const shadow = <T extends Mesh>(m: T) => ((m.castShadow = true), (m.receiveShadow = true), m)
 
   // A card, literally a box inside a box: border frame, padding foam, content block, and a margin shell.
-  type Card = { group: Group; foam: Mesh; content: Mesh; bars: Mesh[]; shell: Mesh; x: number; inner: number }
+  type Card = { group: Group; foam: Mesh; content: Mesh; bars: Mesh[]; shell: Mesh; x: number; inner: number; innerH: number }
   const borderMat = new MeshStandardMaterial({ color: '#2b2b2e', roughness: 0.5 })
   const foamMat = new MeshStandardMaterial({ color: '#ffb27a', roughness: 0.95 })
   const contentMat = new MeshStandardMaterial({ color: PALETTE.tile, roughness: 0.6 })
@@ -38,7 +38,16 @@ if (stage) {
     const shell = new Mesh(new BoxGeometry(1, 1, D * 1.6), shellMat)
     group.add(back, foam, content, ...bars, shell)
     row.add(group)
-    return { group, foam, content, bars, shell, x: 0, inner: W }
+    return { group, foam, content, bars, shell, x: 0, inner: W, innerH: H }
+  })
+
+  // Gutters: dark channels on the floor between the cards, as wide as the gap.
+  const channelMat = new MeshStandardMaterial({ color: '#3a3936', roughness: 0.9 })
+  const channels = Array.from({ length: COUNT - 1 }, () => {
+    const m = new Mesh(new BoxGeometry(1, 0.004, 1), channelMat)
+    m.receiveShadow = true
+    scene.add(m)
+    return m
   })
 
   // Marbles roll through the gutters, front to back, when there's room for them.
@@ -51,6 +60,8 @@ if (stage) {
   const handleMat = new MeshStandardMaterial({ color: '#1d1c1a', roughness: 0.4 })
   const padHandle = shadow(new Mesh(new SphereGeometry(0.022, 20, 16), handleMat))
   const marginHandle = shadow(new Mesh(new SphereGeometry(0.022, 20, 16), new MeshStandardMaterial({ color: '#2f7de1', roughness: 0.4 })))
+  // A larger, invisible grab area around each handle, so they're easy to catch with a finger.
+  for (const h of [padHandle, marginHandle]) h.add(new Mesh(new SphereGeometry(2.4, 12, 8), new MeshBasicMaterial({ visible: false })))
   row.add(padHandle, marginHandle)
 
   // The CSS, on a plate in front of the row.
@@ -145,16 +156,22 @@ if (stage) {
     const targets = layoutRow(COUNT, W, state, PX)
     // Keep the whole row in view: shrink it on narrow screens.
     const total = targets[COUNT - 1].x - targets[0].x + W + 2 * state.margin * PX
-    const fit = Math.min(1, (stage.camera.aspect < 1 ? 1.05 : 1.9) / total)
+    const fit = fitScale(total, stage.camera.aspect)
     row.scale.setScalar(row.scale.x + (fit - row.scale.x) * k)
     targets.forEach((t, i) => {
       const c = cards[i]
       c.x += (t.x - c.x) * k
       c.inner += (t.inner - c.inner) * k
-      const innerH = Math.max(0, H - 2 * state.padding * PX)
-      c.group.position.set(c.x, LIFT + H / 2, 0)
+      c.innerH += (Math.max(0, H - 2 * state.padding * PX) - c.innerH) * k
+      const innerH = c.innerH
+      // Margin is space on every side, so a big margin lifts the card too: the shell never sinks into the floor.
+      const lift = Math.max(LIFT, state.margin * PX + 0.006)
+      c.group.position.set(c.x, lift + H / 2, 0)
       c.foam.scale.set(W - 2 * BORDER, H - 2 * BORDER, 1)
-      c.content.scale.set(Math.max(0.001, c.inner), Math.max(0.001, innerH), 1)
+      // The content never covers the border, even at zero padding.
+      const contentW = Math.min(c.inner, W - 2 * BORDER)
+      const contentH = Math.min(innerH, H - 2 * BORDER)
+      c.content.scale.set(Math.max(0.001, contentW), Math.max(0.001, contentH), 1)
       c.content.visible = c.inner > 0.002 && innerH > 0.002
       c.content.position.z = D * 0.15
       c.bars.forEach((b, j) => {
@@ -168,8 +185,20 @@ if (stage) {
     })
     // Handles ride the middle card's padding edge and margin edge.
     const c1 = cards[1]
-    padHandle.position.set(c1.x + c1.inner / 2, LIFT + H + 0.04, D)
-    marginHandle.position.set(c1.x + handleX('margin', state, W, PX), LIFT + H + 0.09, D)
+    const top = Math.max(LIFT, state.margin * PX + 0.006) + H
+    padHandle.position.set(c1.x + c1.inner / 2, top + 0.04, D)
+    marginHandle.position.set(c1.x + handleX('margin', state, W, PX), top + 0.09, D)
+    const grow = 1 / row.scale.x
+    padHandle.scale.setScalar(grow)
+    marginHandle.scale.setScalar(grow)
+    // Channels sit in each gap, at the row's scale.
+    channels.forEach((ch, g) => {
+      const a = cards[g]
+      const b = cards[g + 1]
+      ch.position.set(((a.x + b.x) / 2) * row.scale.x, 0.002, -0.02 * row.scale.x)
+      ch.scale.set(Math.max(0.0001, state.gap * PX * row.scale.x), 1, 0.46 * row.scale.x)
+      ch.visible = state.gap > 0
+    })
 
     // Gutter marbles: radius fits the gap; none if the gap is too narrow or motion is reduced.
     const gapM = state.gap * PX * row.scale.x
@@ -180,7 +209,7 @@ if (stage) {
       for (let g = 0; g < COUNT - 1; g++) {
         const mesh = shadow(new Mesh(marbleGeo, marbleMat))
         scene.add(mesh)
-        marbles.push({ mesh, gutter: g, z: -0.5 })
+        marbles.push({ mesh, gutter: g, z: -0.25 })
       }
     }
     for (const mb of [...marbles]) {
@@ -190,9 +219,9 @@ if (stage) {
       const mid = ((a.x + b.x) / 2) * row.scale.x
       const rr = Math.min(0.014, state.gap * PX * row.scale.x * 0.4)
       mb.mesh.scale.setScalar(Math.max(0.0001, rr))
-      mb.mesh.position.set(mid, rr, mb.z)
+      mb.mesh.position.set(mid, rr, mb.z * row.scale.x)
       mb.mesh.rotation.x += dt * 0.7 / Math.max(rr, 0.001)
-      if (mb.z > 0.25 || rr < 0.003) {
+      if (mb.z > 0.21 || rr < 0.003) {
         mb.mesh.removeFromParent()
         marbles.splice(marbles.indexOf(mb), 1)
       }

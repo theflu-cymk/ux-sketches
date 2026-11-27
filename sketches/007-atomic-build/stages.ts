@@ -23,10 +23,10 @@ export function visibleWidthAt(shot: Shot, aspect: number, distance: number): nu
  * Each close-up is `span` metres across at its target, on its narrower side.
  */
 const CLOSE: Array<{ at: [number, number]; from: [number, number, number]; span: number }> = [
-  { at: [-0.14, 1.3], from: [-0.45, 0.25, 1], span: 0.33 }, // atoms: chips and tiles near the top-left icons
+  { at: [-0.14, 1.3], from: [-0.45, 0.25, 1], span: 0.27 }, // atoms: chips and tiles near the top-left icons
   { at: [0.16, 1.1], from: [0.4, 0.15, 1], span: 0.3 }, // molecules: an icon with its label
   { at: [0, 0.3], from: [0, -0.3, 1], span: 0.32 }, // organisms: the dock, from below
-  { at: [0.05, 0.85], from: [0.85, 0.2, 1], span: 0.3 }, // template: wireframe blocks, raking from the side
+  { at: [0.05, 0.85], from: [0.55, 0.2, 1], span: 0.24 }, // template: wireframe blocks, raking from the side
 ]
 
 const FOV_CLOSE = 22
